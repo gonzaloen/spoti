@@ -25,7 +25,6 @@ export default async function handler(req, res) {
   }
 }
 */
-
 import axios from 'axios';
 import querystring from 'querystring';
 import cookie from 'cookie';
@@ -56,7 +55,6 @@ export default async function handler(req, res) {
       path: '/',
     }));
 
-    // Redirigir a la página principal después de autenticarse
     res.redirect('/');
   } catch (error) {
     console.error('Error en /api/callback:', error);
