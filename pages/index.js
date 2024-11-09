@@ -71,27 +71,27 @@ export default function Home() {
     fetchTopGenres();
   }, []);
 
-  const handleFollowToggle = async (artistId, isFollowing) => {
-    const method = isFollowing ? 'DELETE' : 'PUT';
-    const url = `https://api.spotify.com/v1/me/following?type=artist&ids=${artistId}`;
+ const handleFollowToggle = async (artistId, isFollowing) => {
+  const action = isFollowing ? 'unfollow' : 'follow';
+  try {
+    const response = await fetch(`/api/toggleFollow?artistId=${artistId}&action=${action}`, {
+      method: 'POST',
+    });
 
-    try {
-      await axios({
-        method,
-        url,
-        headers: {
-          Authorization: `Bearer ${cookie.get('access_token')}`,
-        },
-      });
+    if (response.ok) {
       setFollowedArtists(prevArtists =>
         prevArtists.map(artist =>
           artist.id === artistId ? { ...artist, isFollowing: !isFollowing } : artist
         )
       );
-    } catch (error) {
-      console.error("Error al seguir/dejar de seguir al artista:", error);
+    } else {
+      console.error("Error al seguir/dejar de seguir al artista:", await response.json());
     }
-  };
+  } catch (error) {
+    console.error("Error en la solicitud de seguimiento:", error);
+  }
+};
+
 
   const handleLogout = () => {
     cookie.remove('access_token');
