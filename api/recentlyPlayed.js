@@ -37,7 +37,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    console.log("Obteniendo canciones recientes con token:", accessToken);
     const response = await axios.get('https://api.spotify.com/v1/me/player/recently-played', {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -47,7 +46,6 @@ export default async function handler(req, res) {
       },
     });
 
-    console.log("Respuesta de canciones recientes:", response.data);
     const songs = response.data.items.map(item => ({
       songName: item.track.name,
       artistName: item.track.artists[0].name,
