@@ -7,7 +7,7 @@ export default function Home() {
   const [followedArtists, setFollowedArtists] = useState([]);
   const [topGenres, setTopGenres] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [genreArtists, setGenreArtists] = useState({}); // Estado para almacenar artistas por género
+  const [genreArtists, setGenreArtists] = useState({});
 
   useEffect(() => {
     async function fetchSongs() {
@@ -24,7 +24,7 @@ export default function Home() {
               link: song.artistLink,
               albumImage: song.albumImage,
               id: song.artistId,
-              isFollowing: false, // Estado inicial de seguimiento
+              isFollowing: false,
             });
           }
         });
@@ -38,7 +38,10 @@ export default function Home() {
       const response = await fetch('/api/getFollowedArtists');
       if (response.ok) {
         const data = await response.json();
-        setFollowedArtists(data);
+        setFollowedArtists(data.map(artist => ({
+          ...artist,
+          isFollowing: true,
+        })));
       }
     }
 
@@ -48,13 +51,12 @@ export default function Home() {
         const genres = await response.json();
         setTopGenres(genres);
 
-        // Obtener los últimos 5 artistas de cada género
         const genreArtistsData = {};
         for (const genre of genres) {
           const response = await fetch(`/api/getTopArtistsByGenre?genre=${genre}`);
           if (response.ok) {
             const artists = await response.json();
-            genreArtistsData[genre] = artists.slice(0, 5); // Solo los últimos 5
+            genreArtistsData[genre] = artists.slice(0, 5);
           }
         }
         setGenreArtists(genreArtistsData);
@@ -83,7 +85,6 @@ export default function Home() {
         },
       });
 
-      // Actualizar solo el artista en la sección específica
       if (source === 'uniqueArtists') {
         setUniqueArtists(uniqueArtists.map(artist =>
           artist.id === artistId ? { ...artist, isFollowing: shouldFollow } : artist
@@ -123,6 +124,7 @@ export default function Home() {
       <h1>Tus 10 Últimas Canciones Escuchadas</h1>
       <button onClick={handleLogout}>Desloguearse</button>
 
+      {/* Últimos Artistas Escuchados */}
       <h2>Últimos Artistas Escuchados</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '20px' }}>
         {uniqueArtists.map((artist, index) => (
@@ -140,6 +142,24 @@ export default function Home() {
         ))}
       </div>
 
+      {/* Últimos Artistas Seguidos */}
+      <h2>Últimos Artistas Seguidos</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '20px' }}>
+        {followedArtists.map((artist, index) => (
+          <div key={index} style={{ textAlign: 'center' }}>
+            <img src={artist.image} alt={artist.name} style={{ width: '100%' }} />
+            <h3>{artist.name}</h3>
+            <p>{artist.followers} seguidores</p>
+            {artist.isFollowing ? (
+              <button onClick={() => toggleFollowArtist(artist.id, false, 'followedArtists')}>Dejar de Seguir</button>
+            ) : (
+              <button onClick={() => toggleFollowArtist(artist.id, true, 'followedArtists')}>Seguir</button>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Top Géneros con Artistas Relacionados */}
       <h2>Tus 5 Estilos Más Escuchados</h2>
       {topGenres.map((genre, index) => (
         <div key={index}>
