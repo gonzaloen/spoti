@@ -1,5 +1,7 @@
-/*import axios from 'axios';
+/*
+import axios from 'axios';
 import querystring from 'querystring';
+import cookie from 'cookie';
 
 export default async function handler(req, res) {
   try {
@@ -18,21 +20,30 @@ export default async function handler(req, res) {
     );
 
     const { access_token } = tokenResponse.data;
-    res.redirect(`/api/recentlyPlayed?access_token=${access_token}`);
+
+    res.setHeader('Set-Cookie', cookie.serialize('access_token', access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 3600,
+      path: '/',
+    }));
+
+    res.redirect('/');
   } catch (error) {
-    console.error(error);
+    console.error('Error en /api/callback:', error);
     res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
 }
 */
+
 import axios from 'axios';
 import querystring from 'querystring';
 import cookie from 'cookie';
 
 export default async function handler(req, res) {
-  try {
-    const { code } = req.query;
+  const { code } = req.query;
 
+  try {
     const tokenResponse = await axios.post(
       'https://accounts.spotify.com/api/token',
       querystring.stringify({
