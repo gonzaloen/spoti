@@ -1,10 +1,19 @@
-/* Estilos generales */
+/* Fondo con degradado y animación */
 body {
   font-family: 'Roboto', sans-serif;
-  background-color: #121212;
+  background: linear-gradient(135deg, #1e3c72, #2a5298, #2d89ef, #1c92d2);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
   color: #e0e0e0;
   margin: 0;
   padding: 0;
+}
+
+/* Animación del fondo */
+@keyframes gradientBG {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .container {
@@ -13,32 +22,47 @@ body {
   padding: 20px;
 }
 
-/* Estilos de las tarjetas de artistas */
+/* Tarjetas con efecto hover */
 .card {
-  background-color: #1e1e1e;
+  background-color: rgba(30, 30, 30, 0.85);
   border-radius: 12px;
   padding: 15px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   margin-bottom: 20px;
   text-align: center;
 }
 
 .card:hover {
-  transform: translateY(-10px) scale(1.05);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+  transform: translateY(-12px) scale(1.1);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
 }
 
+/* Imagen circular con borde animado */
 .artist-thumbnail {
   width: 100%;
   max-width: 150px;
   border-radius: 50%;
-  margin-bottom: 10px;
-  transition: transform 0.2s ease;
+  border: 3px solid #1db954;
+  transition: transform 0.3s ease, border-color 0.3s ease;
 }
 
 .artist-thumbnail:hover {
-  transform: scale(1.1);
+  transform: scale(1.15);
+  border-color: #1ed760;
+}
+
+/* Grid de artistas adaptable */
+.timeline-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .timeline-section {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 /* Botones de seguir y dejar de seguir */
@@ -50,7 +74,7 @@ body {
   cursor: pointer;
   border: none;
   color: #fff;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, transform 0.2s ease;
   margin-top: 10px;
 }
 
@@ -60,6 +84,7 @@ body {
 
 .button-follow:hover {
   background-color: #1ed760;
+  transform: scale(1.1);
 }
 
 .button-unfollow {
@@ -68,6 +93,7 @@ body {
 
 .button-unfollow:hover {
   background-color: #ff4f81;
+  transform: scale(1.1);
 }
 
 /* Animación de aparición en las tarjetas */
@@ -84,7 +110,7 @@ body {
   }
 }
 
-/* Barra de progreso en la parte superior */
+/* Barra de progreso animada */
 #progress-container {
   position: fixed;
   top: 0;
@@ -98,21 +124,15 @@ body {
 #progress-bar {
   height: 100%;
   width: 0;
-  background: #1db954;
+  background: linear-gradient(90deg, #1db954, #2fd56a);
   transition: width 0.2s ease;
 }
 
-/* Estilos para los títulos de las secciones */
+/* Títulos con borde y efecto */
 h1, h2 {
   font-family: 'Roboto', sans-serif;
-  color: #fff;
-}
-
-.timeline-section {
-  margin-bottom: 30px;
-}
-
-.timeline-section h2 {
-  border-left: 4px solid #1db954;
-  padding-left: 8px;
+  color: #ffffff;
+  border-bottom: 3px solid #1db954;
+  display: inline-block;
+  padding-bottom: 5px;
 }
