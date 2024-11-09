@@ -1,44 +1,52 @@
 import { useEffect, useState } from 'react';
-import cookie from 'js-cookie';
-import Router from 'next/router';
+import cookie from 'cookie';
+import axios from 'axios';
 
-export default function Home() {
-  const [songs, setSongs] = useState([]);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+export async function getServerSideProps(context) {
+  const cookies = cookie.parse(context.req.headers.cookie || '');
+  const accessToken = cookies.access_token || null;
 
-  useEffect(() => {
-    // Verifica si existe el token en las cookies
-    const accessToken = cookie.get('access_token');
+  if (!accessToken) {
+    // Si no hay token, redirige a /api/login
+    return {
+      redirect: {
+        destination: '/api/login',
+        permanent: false,
+      },
+    };
+  }
 
-    if (accessToken) {
-      // Si hay un token, intenta obtener las canciones recientes
-      async function fetchSongs() {
-        try {
-          const response = await fetch(`/api/recentlyPlayed?access_token=${accessToken}`);
-          if (response.ok) {
-            const data = await response.json();
-            setSongs(data);
-            setIsAuthenticated(true);
-          } else {
-            setIsAuthenticated(false);
-          }
-        } catch (error) {
-          console.error('Error fetching songs:', error);
-        }
-      }
+  try {
+    // Solicita las canciones recientemente escuchadas
+    const response = await axios.get('https://api.spotify.com/v1/me/player/recently-played?limit=10', {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
 
-      fetchSongs();
-    } else {
-      // Si no hay token, redirige al usuario a /api/login para autenticarse
-      Router.push('/api/login');
-    }
-  }, []);
+    const songs = response.data.items.map(item => ({
+      songName: item.track.name,
+      artistName: item.track.artists[0].name,
+      artistLink: item.track.artists[0].external_urls.spotify,
+    }));
 
-  if (!isAuthenticated) {
+    return {
+      props: { songs },
+    };
+  } catch (error) {
+    console.error('Error fetching songs:', error);
+    return {
+      props: { songs: [] },
+    };
+  }
+}
+
+export default function Home({ songs }) {
+  if (!songs || songs.length === 0) {
     return (
       <div>
         <h1>Bienvenido a Spotify Demo</h1>
-        <p>Redirigiendo a la página de autenticación...</p>
+        <p>No se encontraron canciones recientes o el usuario no está autenticado.</p>
       </div>
     );
   }
