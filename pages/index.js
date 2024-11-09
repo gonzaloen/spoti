@@ -7,7 +7,7 @@ export default function Home() {
   const [followedArtists, setFollowedArtists] = useState([]);
   const [topGenres, setTopGenres] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [genreArtists, setGenreArtists] = useState({}); // Estado para almacenar artistas por género
+  const [genreArtists, setGenreArtists] = useState({});
 
   useEffect(() => {
     async function fetchSongs() {
@@ -51,7 +51,6 @@ export default function Home() {
         const genres = await response.json();
         setTopGenres(genres);
 
-        // Obtener los últimos 5 artistas de cada género
         const genreArtistsData = {};
         for (const genre of genres) {
           const genreResponse = await fetch(`/api/getTopArtistsByGenre?genre=${genre}`);
@@ -86,6 +85,7 @@ export default function Home() {
         },
       });
 
+      // Actualizar solo el estado de seguimiento del artista específico
       if (source === 'uniqueArtists') {
         setUniqueArtists(uniqueArtists.map(artist =>
           artist.id === artistId ? { ...artist, isFollowing: shouldFollow } : artist
@@ -123,6 +123,7 @@ export default function Home() {
       <h1>Tus 10 Últimas Canciones Escuchadas</h1>
       <button onClick={handleLogout}>Desloguearse</button>
 
+      {/* Últimos Artistas Escuchados */}
       <h2>Últimos Artistas Escuchados</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '20px' }}>
         {uniqueArtists.map((artist, index) => (
@@ -140,6 +141,7 @@ export default function Home() {
         ))}
       </div>
 
+      {/* Últimos Artistas Seguidos */}
       <h2>Últimos Artistas Seguidos</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '20px' }}>
         {followedArtists.map((artist, index) => (
@@ -156,6 +158,7 @@ export default function Home() {
         ))}
       </div>
 
+      {/* Top Géneros con Artistas Relacionados */}
       <h2>Tus 5 Estilos Más Escuchados</h2>
       {topGenres.map((genre, index) => (
         <div key={index}>
