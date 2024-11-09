@@ -2,14 +2,15 @@ import axios from 'axios';
 import cookie from 'cookie';
 
 export default async function handler(req, res) {
-  const { offset = 0 } = req.query;
   const cookies = cookie.parse(req.headers.cookie || '');
   const accessToken = cookies.access_token;
 
   if (!accessToken) {
-    console.error("Error: No hay token de acceso");
+    console.error("Error: No hay token de acceso en la solicitud");
     return res.status(401).json({ error: 'No autenticado' });
   }
+
+  console.log("Token de acceso en la solicitud:", accessToken);  // <-- Verificar el token aquí
 
   try {
     console.log("Obteniendo artistas seguidos con token:", accessToken);
