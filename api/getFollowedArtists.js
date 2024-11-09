@@ -2,19 +2,14 @@ import axios from 'axios';
 import cookie from 'cookie';
 
 export default async function handler(req, res) {
-  const { offset = 0 } = req.query; // Definir offset a partir de los parámetros de la solicitud
   const cookies = cookie.parse(req.headers.cookie || '');
   const accessToken = cookies.access_token;
 
   if (!accessToken) {
-    console.error("Error: No hay token de acceso en la solicitud");
     return res.status(401).json({ error: 'No autenticado' });
   }
 
-  console.log("Token de acceso en la solicitud:", accessToken);
-
   try {
-    console.log("Obteniendo artistas seguidos con token:", accessToken);
     const response = await axios.get('https://api.spotify.com/v1/me/following', {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -22,54 +17,18 @@ export default async function handler(req, res) {
       params: {
         type: 'artist',
         limit: 10,
-        offset: offset,
       },
     });
 
-    console.log("Respuesta de artistas:", response.data);
-    const artists = response.data.artists.items;
+    const artists = response.data.artists.items.map(artist => ({
+      name: artist.name,
+      link: artist.external_urls.spotify,
+      image: artist.images[0]?.url,
+      followers: artist.followers.total,
+    }));
 
-    const artistsWithReleases = await Promise.all(
-      artists.map(async (artist) => {
-        try {
-          const releaseResponse = await axios.get(`https://api.spotify.com/v1/artists/${artist.id}/albums`, {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-            params: {
-              limit: 1,
-              include_groups: 'album,single',
-            },
-          });
-
-          const lastRelease = releaseResponse.data.items[0] || null;
-          return {
-            id: artist.id,
-            name: artist.name,
-            image: artist.images[0]?.url,
-            followers: artist.followers.total,
-            lastRelease: lastRelease ? {
-              name: lastRelease.name,
-              releaseDate: lastRelease.release_date,
-              albumCover: lastRelease.images[0]?.url,
-            } : null,
-          };
-        } catch (error) {
-          console.error(`Error al obtener el último lanzamiento de ${artist.name}:`, error.message);
-          return {
-            id: artist.id,
-            name: artist.name,
-            image: artist.images[0]?.url,
-            followers: artist.followers.total,
-            lastRelease: null,
-          };
-        }
-      })
-    );
-
-    res.status(200).json(artistsWithReleases);
+    res.status(200).json(artists);
   } catch (error) {
-    console.error('Error al obtener artistas seguidos:', error.message);
-    res.status(500).json({ error: 'Error al obtener artistas', details: error.message });
+    res.status(500).json({ error: 'Error al obtener artistas seguidos', details: error.message });
   }
 }
