@@ -2,19 +2,40 @@ import { useEffect, useState } from 'react';
 
 export default function Home() {
   const [songs, setSongs] = useState([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     async function fetchSongs() {
-      const response = await fetch('/api/recentlyPlayed');
-      const data = await response.json();
-      setSongs(data);
+      try {
+        const response = await fetch('/api/recentlyPlayed');
+        if (response.ok) {
+          const data = await response.json();
+          setSongs(data);
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
+        console.error('Error fetching songs:', error);
+      }
     }
+
     fetchSongs();
   }, []);
 
+  if (!isAuthenticated) {
+    return (
+      <div>
+        <h1>Bienvenido a Spotify Demo</h1>
+        <p>Para ver tus últimas canciones, por favor inicia sesión con Spotify.</p>
+        <a href="/api/login">Iniciar Sesión con Spotify</a>
+      </div>
+    );
+  }
+
   return (
     <div>
-      <h1>Mis 10 Últimas Canciones Escuchadas</h1>
+      <h1>Tus 10 Últimas Canciones Escuchadas</h1>
       <ul>
         {songs.map((song, index) => (
           <li key={index}>
@@ -24,7 +45,6 @@ export default function Home() {
           </li>
         ))}
       </ul>
-      <a href="/api/login">Conectar con Spotify</a>
     </div>
   );
 }
