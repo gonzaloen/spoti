@@ -6,9 +6,11 @@ export default async function handler(req, res) {
   const accessToken = cookies.access_token;
 
   if (!accessToken) {
-    console.error("Error: No hay token de acceso");
+    console.error("Error: No hay token de acceso en la solicitud");
     return res.status(401).json({ error: 'No autenticado' });
   }
+
+  console.log("Token de acceso en la solicitud:", accessToken);
 
   try {
     console.log("Obteniendo géneros más escuchados con token:", accessToken);
