@@ -7,7 +7,7 @@ export default function Home() {
   const [followedArtists, setFollowedArtists] = useState([]);
   const [topGenres, setTopGenres] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [genreArtists, setGenreArtists] = useState({});
+  const [genreArtists, setGenreArtists] = useState({}); // Estado para almacenar artistas por género
 
   useEffect(() => {
     async function fetchSongs() {
@@ -51,11 +51,12 @@ export default function Home() {
         const genres = await response.json();
         setTopGenres(genres);
 
+        // Obtener los últimos 5 artistas de cada género
         const genreArtistsData = {};
         for (const genre of genres) {
-          const response = await fetch(`/api/getTopArtistsByGenre?genre=${genre}`);
-          if (response.ok) {
-            const artists = await response.json();
+          const genreResponse = await fetch(`/api/getTopArtistsByGenre?genre=${genre}`);
+          if (genreResponse.ok) {
+            const artists = await genreResponse.json();
             genreArtistsData[genre] = artists.slice(0, 5);
           }
         }
@@ -74,7 +75,7 @@ export default function Home() {
     window.location.href = '/';
   };
 
-  const toggleFollowArtist = async (artistId, shouldFollow, source) => {
+  const toggleFollowArtist = async (artistId, shouldFollow, source, genre) => {
     try {
       const endpoint = `https://api.spotify.com/v1/me/following?type=artist&ids=${artistId}`;
       await fetch(endpoint, {
@@ -96,11 +97,9 @@ export default function Home() {
       } else if (source === 'genreArtists') {
         setGenreArtists(prevGenreArtists => {
           const updatedGenreArtists = { ...prevGenreArtists };
-          for (const genre in updatedGenreArtists) {
-            updatedGenreArtists[genre] = updatedGenreArtists[genre].map(artist =>
-              artist.id === artistId ? { ...artist, isFollowing: shouldFollow } : artist
-            );
-          }
+          updatedGenreArtists[genre] = updatedGenreArtists[genre].map(artist =>
+            artist.id === artistId ? { ...artist, isFollowing: shouldFollow } : artist
+          );
           return updatedGenreArtists;
         });
       }
@@ -124,7 +123,6 @@ export default function Home() {
       <h1>Tus 10 Últimas Canciones Escuchadas</h1>
       <button onClick={handleLogout}>Desloguearse</button>
 
-      {/* Últimos Artistas Escuchados */}
       <h2>Últimos Artistas Escuchados</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '20px' }}>
         {uniqueArtists.map((artist, index) => (
@@ -142,7 +140,6 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Últimos Artistas Seguidos */}
       <h2>Últimos Artistas Seguidos</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '20px' }}>
         {followedArtists.map((artist, index) => (
@@ -159,7 +156,6 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Top Géneros con Artistas Relacionados */}
       <h2>Tus 5 Estilos Más Escuchados</h2>
       {topGenres.map((genre, index) => (
         <div key={index}>
@@ -176,9 +172,9 @@ export default function Home() {
                   <p style={{ fontSize: '12px' }}>{artist.name}</p>
                 </a>
                 {artist.isFollowing ? (
-                  <button onClick={() => toggleFollowArtist(artist.id, false, 'genreArtists')}>Dejar de Seguir</button>
+                  <button onClick={() => toggleFollowArtist(artist.id, false, 'genreArtists', genre)}>Dejar de Seguir</button>
                 ) : (
-                  <button onClick={() => toggleFollowArtist(artist.id, true, 'genreArtists')}>Seguir</button>
+                  <button onClick={() => toggleFollowArtist(artist.id, true, 'genreArtists', genre)}>Seguir</button>
                 )}
               </div>
             ))}
