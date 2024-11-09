@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import cookie from 'js-cookie';
+import axios from 'axios';
 
 export default function Home() {
   const [songs, setSongs] = useState([]);
@@ -16,7 +17,7 @@ export default function Home() {
         const data = await response.json();
         setSongs(data);
         setIsAuthenticated(true);
-        
+
         const artistsMap = new Map();
         data.forEach(song => {
           if (!artistsMap.has(song.artistName)) {
@@ -47,11 +48,18 @@ export default function Home() {
         setTopGenres(genres);
 
         const genreArtistsData = {};
+        const seenArtists = new Set();
+
         for (const genre of genres) {
           const genreResponse = await fetch(`/api/getTopArtistsByGenre?genre=${genre}`);
           if (genreResponse.ok) {
             const artists = await genreResponse.json();
-            genreArtistsData[genre] = artists;
+
+            // Filtrar artistas para evitar duplicados en otros géneros
+            const filteredArtists = artists.filter(artist => !seenArtists.has(artist.id));
+            filteredArtists.forEach(artist => seenArtists.add(artist.id));
+
+            genreArtistsData[genre] = filteredArtists;
           }
         }
         setGenreArtists(genreArtistsData);
@@ -62,6 +70,28 @@ export default function Home() {
     fetchFollowedArtists();
     fetchTopGenres();
   }, []);
+
+  const handleFollowToggle = async (artistId, isFollowing) => {
+    const method = isFollowing ? 'DELETE' : 'PUT';
+    const url = `https://api.spotify.com/v1/me/following?type=artist&ids=${artistId}`;
+
+    try {
+      await axios({
+        method,
+        url,
+        headers: {
+          Authorization: `Bearer ${cookie.get('access_token')}`,
+        },
+      });
+      setFollowedArtists(prevArtists =>
+        prevArtists.map(artist =>
+          artist.id === artistId ? { ...artist, isFollowing: !isFollowing } : artist
+        )
+      );
+    } catch (error) {
+      console.error("Error al seguir/dejar de seguir al artista:", error);
+    }
+  };
 
   const handleLogout = () => {
     cookie.remove('access_token');
@@ -104,6 +134,12 @@ export default function Home() {
             <img src={artist.image} alt={artist.name} className="artist-thumbnail" />
             <h3>{artist.name}</h3>
             <p>{artist.followers} seguidores</p>
+            <button
+              onClick={() => handleFollowToggle(artist.id, artist.isFollowing)}
+              className={artist.isFollowing ? "button-unfollow" : "button-follow"}
+            >
+              {artist.isFollowing ? "Dejar de Seguir" : "Seguir"}
+            </button>
           </div>
         ))}
       </div>
@@ -120,6 +156,12 @@ export default function Home() {
                   <img src={artist.image} alt={artist.name} className="carousel-image" />
                   <p>{artist.name}</p>
                 </a>
+                <button
+                  onClick={() => handleFollowToggle(artist.id, artist.isFollowing)}
+                  className={artist.isFollowing ? "button-unfollow" : "button-follow"}
+                >
+                  {artist.isFollowing ? "Dejar de Seguir" : "Seguir"}
+                </button>
               </div>
             ))}
           </div>
