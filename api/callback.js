@@ -20,6 +20,8 @@ export default async function handler(req, res) {
 
     const { access_token } = tokenResponse.data;
 
+    console.log('Token de acceso recibido en callback.js:', access_token); // Log para verificar el token
+
     // Almacena el token de acceso en una cookie
     res.setHeader('Set-Cookie', cookie.serialize('access_token', access_token, {
       httpOnly: true,
