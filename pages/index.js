@@ -75,43 +75,46 @@ export default function Home() {
   };
 
   const toggleFollowArtist = async (artistId, shouldFollow, source, genre) => {
-  try {
-    const endpoint = `https://api.spotify.com/v1/me/following?type=artist&ids=${artistId}`;
-    await fetch(endpoint, {
-      method: shouldFollow ? 'PUT' : 'DELETE',
-      headers: {
-        Authorization: `Bearer ${cookie.get('access_token')}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    // Clonar y actualizar solo el estado del artista específico
-    if (source === 'uniqueArtists') {
-      setUniqueArtists(prevArtists =>
-        prevArtists.map(artist =>
-          artist.id === artistId ? { ...artist, isFollowing: shouldFollow } : artist
-        )
-      );
-    } else if (source === 'followedArtists') {
-      setFollowedArtists(prevArtists =>
-        prevArtists.map(artist =>
-          artist.id === artistId ? { ...artist, isFollowing: shouldFollow } : artist
-        )
-      );
-    } else if (source === 'genreArtists') {
-      setGenreArtists(prevGenreArtists => {
-        const updatedGenreArtists = { ...prevGenreArtists };
-        updatedGenreArtists[genre] = updatedGenreArtists[genre].map(artist =>
-          artist.id === artistId ? { ...artist, isFollowing: shouldFollow } : artist
-        );
-        return updatedGenreArtists;
-      });
+    if (!artistId) {
+      console.error('Error: artistId está indefinido');
+      return;
     }
-  } catch (error) {
-    console.error('Error al cambiar el estado de seguimiento:', error);
-  }
-};
 
+    try {
+      const endpoint = `https://api.spotify.com/v1/me/following?type=artist&ids=${artistId}`;
+      await fetch(endpoint, {
+        method: shouldFollow ? 'PUT' : 'DELETE',
+        headers: {
+          Authorization: `Bearer ${cookie.get('access_token')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (source === 'uniqueArtists') {
+        setUniqueArtists(prevArtists =>
+          prevArtists.map(artist =>
+            artist.id === artistId ? { ...artist, isFollowing: shouldFollow } : artist
+          )
+        );
+      } else if (source === 'followedArtists') {
+        setFollowedArtists(prevArtists =>
+          prevArtists.map(artist =>
+            artist.id === artistId ? { ...artist, isFollowing: shouldFollow } : artist
+          )
+        );
+      } else if (source === 'genreArtists') {
+        setGenreArtists(prevGenreArtists => {
+          const updatedGenreArtists = { ...prevGenreArtists };
+          updatedGenreArtists[genre] = updatedGenreArtists[genre].map(artist =>
+            artist.id === artistId ? { ...artist, isFollowing: shouldFollow } : artist
+          );
+          return updatedGenreArtists;
+        });
+      }
+    } catch (error) {
+      console.error('Error al cambiar el estado de seguimiento:', error);
+    }
+  };
 
   if (!isAuthenticated) {
     return (
@@ -124,17 +127,20 @@ export default function Home() {
   }
 
   return (
-    <div>
+    <div className="container">
+      <div id="progress-container">
+        <div id="progress-bar"></div>
+      </div>
+
       <h1>Tus 10 Últimas Canciones Escuchadas</h1>
       <button onClick={handleLogout}>Desloguearse</button>
 
-      {/* Últimos Artistas Escuchados */}
       <h2>Últimos Artistas Escuchados</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '20px' }}>
+      <div className="timeline-section">
         {uniqueArtists.map((artist, index) => (
-          <div key={index} style={{ textAlign: 'center' }}>
+          <div key={index} className="card fade-in">
             <a href={artist.link} target="_blank" rel="noopener noreferrer">
-              <img src={artist.albumImage} alt={artist.name} style={{ width: '100%' }} />
+              <img src={artist.albumImage} alt={artist.name} className="artist-thumbnail" />
               <h3>{artist.name}</h3>
             </a>
             {artist.isFollowing ? (
@@ -146,12 +152,11 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Últimos Artistas Seguidos */}
       <h2>Últimos Artistas Seguidos</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '20px' }}>
+      <div className="timeline-section">
         {followedArtists.map((artist, index) => (
-          <div key={index} style={{ textAlign: 'center' }}>
-            <img src={artist.image} alt={artist.name} style={{ width: '100%' }} />
+          <div key={index} className="card fade-in">
+            <img src={artist.image} alt={artist.name} className="artist-thumbnail" />
             <h3>{artist.name}</h3>
             <p>{artist.followers} seguidores</p>
             {artist.isFollowing ? (
@@ -163,21 +168,16 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Top Géneros con Artistas Relacionados */}
       <h2>Tus 5 Estilos Más Escuchados</h2>
       {topGenres.map((genre, index) => (
         <div key={index}>
           <h3>{genre}</h3>
           <div style={{ display: 'flex', gap: '10px' }}>
             {(genreArtists[genre] || []).map(artist => (
-              <div key={artist.id} style={{ textAlign: 'center' }}>
+              <div key={artist.id} className="card fade-in" style={{ textAlign: 'center' }}>
                 <a href={artist.link} target="_blank" rel="noopener noreferrer">
-                  <img
-                    src={artist.image}
-                    alt={artist.name}
-                    style={{ width: '50px', height: '50px', borderRadius: '50%' }}
-                  />
-                  <p style={{ fontSize: '12px' }}>{artist.name}</p>
+                  <img src={artist.image} alt={artist.name} className="artist-thumbnail" style={{ borderRadius: '50%' }} />
+                  <p>{artist.name}</p>
                 </a>
                 {artist.isFollowing ? (
                   <button onClick={() => toggleFollowArtist(artist.id, false, 'genreArtists', genre)}>Dejar de Seguir</button>
