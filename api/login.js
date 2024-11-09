@@ -14,7 +14,6 @@ export default function handler(req, res) {
   res.redirect(authURL);
 }
 */
-
 import querystring from 'querystring';
 
 export default function handler(req, res) {
