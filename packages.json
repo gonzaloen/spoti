@@ -1,0 +1,13 @@
+{
+  "name": "spotify-demo",
+  "version": "1.0.0",
+  "description": "Demo project for Spotify integration",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "axios": "^0.21.1",
+    "querystring": "^0.2.1"
+  }
+}
