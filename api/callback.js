@@ -46,13 +46,12 @@ export default async function handler(req, res) {
     );
 
     const { access_token } = tokenResponse.data;
-    console.log("Token de acceso recibido:", access_token);  // <-- Agregar este log para verificar el token
+    console.log("Token de acceso recibido:", access_token);  // <-- Verificar que se obtiene el token
 
-    // Guardar el token en una cookie
     res.setHeader('Set-Cookie', cookie.serialize('access_token', access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 3600, // Expira en una hora
+      maxAge: 3600,
       path: '/',
     }));
 
