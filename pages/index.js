@@ -22,6 +22,7 @@ export default function Home() {
               name: song.artistName,
               link: song.artistLink,
               albumImage: song.albumImage,
+              id: song.artistId, // ID para seguimiento
             });
           }
         });
@@ -60,10 +61,7 @@ export default function Home() {
 
   const toggleFollowArtist = async (artistId, shouldFollow) => {
     try {
-      const endpoint = shouldFollow
-        ? `https://api.spotify.com/v1/me/following?type=artist&ids=${artistId}`
-        : `https://api.spotify.com/v1/me/following?type=artist&ids=${artistId}`;
-
+      const endpoint = `https://api.spotify.com/v1/me/following?type=artist&ids=${artistId}`;
       await fetch(endpoint, {
         method: shouldFollow ? 'PUT' : 'DELETE',
         headers: {
@@ -72,11 +70,14 @@ export default function Home() {
         },
       });
 
-      // Actualizar el estado después de seguir o dejar de seguir
-      const updatedArtists = followedArtists.map(artist =>
+      // Actualizar los estados después de seguir/dejar de seguir
+      setUniqueArtists(uniqueArtists.map(artist => 
         artist.id === artistId ? { ...artist, isFollowing: shouldFollow } : artist
-      );
-      setFollowedArtists(updatedArtists);
+      ));
+
+      setFollowedArtists(followedArtists.map(artist =>
+        artist.id === artistId ? { ...artist, isFollowing: shouldFollow } : artist
+      ));
     } catch (error) {
       console.error('Error al cambiar el estado de seguimiento:', error);
     }
@@ -97,6 +98,7 @@ export default function Home() {
       <h1>Tus 10 Últimas Canciones Escuchadas</h1>
       <button onClick={handleLogout}>Desloguearse</button>
 
+      {/* Últimos Artistas Escuchados con botones de seguimiento */}
       <h2>Últimos Artistas Escuchados</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '20px' }}>
         {uniqueArtists.map((artist, index) => (
@@ -105,10 +107,16 @@ export default function Home() {
               <img src={artist.albumImage} alt={artist.name} style={{ width: '100%' }} />
               <h3>{artist.name}</h3>
             </a>
+            {artist.isFollowing ? (
+              <button onClick={() => toggleFollowArtist(artist.id, false)}>Dejar de Seguir</button>
+            ) : (
+              <button onClick={() => toggleFollowArtist(artist.id, true)}>Seguir</button>
+            )}
           </div>
         ))}
       </div>
 
+      {/* Últimos Artistas Seguidos */}
       <h2>Últimos Artistas Seguidos</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '20px' }}>
         {followedArtists.map((artist, index) => (
