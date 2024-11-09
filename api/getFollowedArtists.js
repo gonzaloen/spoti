@@ -70,4 +70,6 @@ export default async function handler(req, res) {
     res.status(200).json(artistsWithReleases);
   } catch (error) {
     console.error('Error al obtener artistas seguidos:', error.message);
-    res.sta
+    res.status(500).json({ error: 'Error al obtener artistas', details: error.message });
+  }
+}
