@@ -1,4 +1,4 @@
-/* Fondo blanco simple */
+/* Fondo blanco */
 body {
   font-family: 'Roboto', sans-serif;
   background-color: #ffffff;
@@ -13,7 +13,6 @@ body {
   padding: 20px;
 }
 
-/* Tarjetas para artistas en cuadrícula */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -31,12 +30,11 @@ body {
 .artist-thumbnail {
   width: 100%;
   max-width: 100px;
-  border-radius: 50%;
+  border-radius: 0;
   margin-bottom: 8px;
   object-fit: cover;
 }
 
-/* Carrusel de artistas por género */
 .carousel {
   display: flex;
   overflow-x: auto;
@@ -62,17 +60,31 @@ body {
   object-fit: cover;
 }
 
-/* Botón de logout */
-button {
-  padding: 8px 16px;
-  border-radius: 5px;
-  background-color: #1db954;
-  color: white;
-  border: none;
+/* Botones */
+.button-follow,
+.button-unfollow {
+  padding: 8px 20px;
+  border-radius: 25px;
+  font-size: 14px;
   cursor: pointer;
-  margin-bottom: 20px;
+  border: none;
+  color: #fff;
+  margin-top: 10px;
+  transition: background-color 0.3s;
 }
 
-button:hover {
+.button-follow {
+  background-color: #1db954;
+}
+
+.button-follow:hover {
   background-color: #1ed760;
+}
+
+.button-unfollow {
+  background-color: #e0245e;
+}
+
+.button-unfollow:hover {
+  background-color: #ff4f81;
 }
