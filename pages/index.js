@@ -1,66 +1,3 @@
-/*
-import { useEffect, useState } from 'react';
-import cookie from 'js-cookie';
-
-export default function Home() {
-  const [songs, setSongs] = useState([]);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  useEffect(() => {
-    async function fetchSongs() {
-      try {
-        const response = await fetch('/api/recentlyPlayed');
-        if (response.ok) {
-          const data = await response.json();
-          setSongs(data);
-          setIsAuthenticated(true);
-        } else {
-          setIsAuthenticated(false);
-        }
-      } catch (error) {
-        console.error('Error al cargar canciones:', error);
-      }
-    }
-
-    fetchSongs();
-  }, []);
-
-  const handleLogout = () => {
-    cookie.remove('access_token'); // Eliminar la cookie del token de acceso
-    setIsAuthenticated(false);
-    window.location.href = '/api/login'; // Redirigir al usuario para iniciar sesión de nuevo
-  };
-
-  if (!isAuthenticated) {
-    return (
-      <div>
-        <h1>Bienvenido a Spotify Demo</h1>
-        <p>Para ver tus últimas canciones, por favor inicia sesión con Spotify.</p>
-        <a href="/api/login">Iniciar Sesión con Spotify</a>
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <h1>Tus 10 Últimas Canciones Escuchadas</h1>
-      <button onClick={handleLogout}>Desloguearse</button>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '20px' }}>
-        {songs.map((song, index) => (
-          <div key={index} style={{ textAlign: 'center', padding: '10px', borderRadius: '8px', backgroundColor: '#f3f3f3' }}>
-            <a href={song.artistLink} target="_blank" rel="noopener noreferrer">
-              <img src={song.albumImage} alt={song.songName} style={{ width: '100%', borderRadius: '8px' }} />
-              <h3>{song.songName}</h3>
-              <p>{song.artistName}</p>
-            </a>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-*/
-
 import { useEffect, useState } from 'react';
 import cookie from 'js-cookie';
 
@@ -118,7 +55,31 @@ export default function Home() {
   const handleLogout = () => {
     cookie.remove('access_token');
     setIsAuthenticated(false);
-    window.location.href = '/api/login';
+    window.location.href = '/';
+  };
+
+  const toggleFollowArtist = async (artistId, shouldFollow) => {
+    try {
+      const endpoint = shouldFollow
+        ? `https://api.spotify.com/v1/me/following?type=artist&ids=${artistId}`
+        : `https://api.spotify.com/v1/me/following?type=artist&ids=${artistId}`;
+
+      await fetch(endpoint, {
+        method: shouldFollow ? 'PUT' : 'DELETE',
+        headers: {
+          Authorization: `Bearer ${cookie.get('access_token')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      // Actualizar el estado después de seguir o dejar de seguir
+      const updatedArtists = followedArtists.map(artist =>
+        artist.id === artistId ? { ...artist, isFollowing: shouldFollow } : artist
+      );
+      setFollowedArtists(updatedArtists);
+    } catch (error) {
+      console.error('Error al cambiar el estado de seguimiento:', error);
+    }
   };
 
   if (!isAuthenticated) {
@@ -155,6 +116,11 @@ export default function Home() {
             <img src={artist.image} alt={artist.name} style={{ width: '100%' }} />
             <h3>{artist.name}</h3>
             <p>{artist.followers} seguidores</p>
+            {artist.isFollowing ? (
+              <button onClick={() => toggleFollowArtist(artist.id, false)}>Dejar de Seguir</button>
+            ) : (
+              <button onClick={() => toggleFollowArtist(artist.id, true)}>Seguir</button>
+            )}
           </div>
         ))}
       </div>
