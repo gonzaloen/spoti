@@ -16,6 +16,19 @@ export default function Home() {
         const data = await response.json();
         setSongs(data);
         setIsAuthenticated(true);
+        
+        const artistsMap = new Map();
+        data.forEach(song => {
+          if (!artistsMap.has(song.artistName)) {
+            artistsMap.set(song.artistName, {
+              name: song.artistName,
+              link: song.artistLink,
+              albumImage: song.albumImage,
+              id: song.artistId,
+            });
+          }
+        });
+        setUniqueArtists(Array.from(artistsMap.values()));
       }
     }
 
@@ -60,7 +73,7 @@ export default function Home() {
     return (
       <div>
         <h1>Bienvenido a Spotify Demo</h1>
-        <p>Inicia sesión para ver tus datos de Spotify</p>
+        <p>Para ver tus datos, por favor inicia sesión con Spotify.</p>
         <a href="/api/login">Iniciar Sesión</a>
       </div>
     );
@@ -69,7 +82,33 @@ export default function Home() {
   return (
     <div className="container">
       <button onClick={handleLogout}>Desloguearse</button>
-      
+
+      {/* Módulo: Últimos Artistas Escuchados */}
+      <h2>Últimos Artistas Escuchados</h2>
+      <div className="grid">
+        {uniqueArtists.map((artist, index) => (
+          <div key={index} className="card">
+            <a href={artist.link} target="_blank" rel="noopener noreferrer">
+              <img src={artist.albumImage} alt={artist.name} className="artist-thumbnail" />
+              <h3>{artist.name}</h3>
+            </a>
+          </div>
+        ))}
+      </div>
+
+      {/* Módulo: Últimos Artistas Seguidos */}
+      <h2>Últimos Artistas Seguidos</h2>
+      <div className="grid">
+        {followedArtists.map((artist, index) => (
+          <div key={index} className="card">
+            <img src={artist.image} alt={artist.name} className="artist-thumbnail" />
+            <h3>{artist.name}</h3>
+            <p>{artist.followers} seguidores</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Módulo: Top Géneros y Artistas Relacionados */}
       <h2>Top Géneros Escuchados y Artistas Relacionados</h2>
       {topGenres.map((genre, index) => (
         <div key={index}>
