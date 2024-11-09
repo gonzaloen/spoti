@@ -6,11 +6,12 @@ export default async function handler(req, res) {
   const accessToken = cookies.access_token;
 
   if (!accessToken) {
+    console.error("Error: No hay token de acceso");
     return res.status(401).json({ error: 'No autenticado' });
   }
 
   try {
-    // Obtener los artistas más escuchados
+    console.log("Obteniendo géneros más escuchados con token:", accessToken);
     const response = await axios.get('https://api.spotify.com/v1/me/top/artists', {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -20,6 +21,7 @@ export default async function handler(req, res) {
       },
     });
 
+    console.log("Respuesta de artistas para géneros:", response.data);
     const genresCount = {};
     response.data.items.forEach(artist => {
       artist.genres.forEach(genre => {
@@ -27,7 +29,6 @@ export default async function handler(req, res) {
       });
     });
 
-    // Ordenar los géneros y obtener los 5 más escuchados
     const topGenres = Object.entries(genresCount)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
@@ -35,7 +36,7 @@ export default async function handler(req, res) {
 
     res.status(200).json(topGenres);
   } catch (error) {
-    console.error('Error al obtener géneros más escuchados:', error);
-    res.status(500).json({ error: 'Error al obtener géneros' });
+    console.error('Error al obtener géneros más escuchados:', error.message);
+    res.status(500).json({ error: 'Error al obtener géneros', details: error.message });
   }
 }
