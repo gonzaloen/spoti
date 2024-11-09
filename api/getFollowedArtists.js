@@ -2,6 +2,7 @@ import axios from 'axios';
 import cookie from 'cookie';
 
 export default async function handler(req, res) {
+  const { offset = 0 } = req.query; // Definir offset a partir de los parámetros de la solicitud
   const cookies = cookie.parse(req.headers.cookie || '');
   const accessToken = cookies.access_token;
 
@@ -10,7 +11,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'No autenticado' });
   }
 
-  console.log("Token de acceso en la solicitud:", accessToken);  // <-- Verificar el token aquí
+  console.log("Token de acceso en la solicitud:", accessToken);
 
   try {
     console.log("Obteniendo artistas seguidos con token:", accessToken);
@@ -69,6 +70,4 @@ export default async function handler(req, res) {
     res.status(200).json(artistsWithReleases);
   } catch (error) {
     console.error('Error al obtener artistas seguidos:', error.message);
-    res.status(500).json({ error: 'Error al obtener artistas', details: error.message });
-  }
-}
+    res.sta
