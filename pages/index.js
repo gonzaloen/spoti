@@ -75,38 +75,43 @@ export default function Home() {
   };
 
   const toggleFollowArtist = async (artistId, shouldFollow, source, genre) => {
-    try {
-      const endpoint = `https://api.spotify.com/v1/me/following?type=artist&ids=${artistId}`;
-      await fetch(endpoint, {
-        method: shouldFollow ? 'PUT' : 'DELETE',
-        headers: {
-          Authorization: `Bearer ${cookie.get('access_token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
+  try {
+    const endpoint = `https://api.spotify.com/v1/me/following?type=artist&ids=${artistId}`;
+    await fetch(endpoint, {
+      method: shouldFollow ? 'PUT' : 'DELETE',
+      headers: {
+        Authorization: `Bearer ${cookie.get('access_token')}`,
+        'Content-Type': 'application/json',
+      },
+    });
 
-      // Actualizar solo el estado de seguimiento del artista específico
-      if (source === 'uniqueArtists') {
-        setUniqueArtists(uniqueArtists.map(artist =>
+    // Clonar y actualizar solo el estado del artista específico
+    if (source === 'uniqueArtists') {
+      setUniqueArtists(prevArtists =>
+        prevArtists.map(artist =>
           artist.id === artistId ? { ...artist, isFollowing: shouldFollow } : artist
-        ));
-      } else if (source === 'followedArtists') {
-        setFollowedArtists(followedArtists.map(artist =>
+        )
+      );
+    } else if (source === 'followedArtists') {
+      setFollowedArtists(prevArtists =>
+        prevArtists.map(artist =>
           artist.id === artistId ? { ...artist, isFollowing: shouldFollow } : artist
-        ));
-      } else if (source === 'genreArtists') {
-        setGenreArtists(prevGenreArtists => {
-          const updatedGenreArtists = { ...prevGenreArtists };
-          updatedGenreArtists[genre] = updatedGenreArtists[genre].map(artist =>
-            artist.id === artistId ? { ...artist, isFollowing: shouldFollow } : artist
-          );
-          return updatedGenreArtists;
-        });
-      }
-    } catch (error) {
-      console.error('Error al cambiar el estado de seguimiento:', error);
+        )
+      );
+    } else if (source === 'genreArtists') {
+      setGenreArtists(prevGenreArtists => {
+        const updatedGenreArtists = { ...prevGenreArtists };
+        updatedGenreArtists[genre] = updatedGenreArtists[genre].map(artist =>
+          artist.id === artistId ? { ...artist, isFollowing: shouldFollow } : artist
+        );
+        return updatedGenreArtists;
+      });
     }
-  };
+  } catch (error) {
+    console.error('Error al cambiar el estado de seguimiento:', error);
+  }
+};
+
 
   if (!isAuthenticated) {
     return (
