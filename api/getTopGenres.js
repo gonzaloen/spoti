@@ -10,25 +10,29 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await axios.get('https://api.spotify.com/v1/me/following', {
+    const response = await axios.get('https://api.spotify.com/v1/me/top/artists', {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
       params: {
-        type: 'artist',
-        limit: 10,
+        limit: 50,
       },
     });
 
-    const artists = response.data.artists.items.map(artist => ({
-      name: artist.name,
-      link: artist.external_urls.spotify,
-      image: artist.images[0]?.url,
-      followers: artist.followers.total,
-    }));
+    const genresCount = {};
+    response.data.items.forEach(artist => {
+      artist.genres.forEach(genre => {
+        genresCount[genre] = (genresCount[genre] || 0) + 1;
+      });
+    });
 
-    res.status(200).json(artists);
+    const topGenres = Object.entries(genresCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([genre]) => genre);
+
+    res.status(200).json(topGenres);
   } catch (error) {
-    res.status(500).json({ error: 'Error al obtener artistas seguidos', details: error.message });
+    res.status(500).json({ error: 'Error al obtener géneros más escuchados', details: error.message });
   }
 }
