@@ -1,50 +1,36 @@
-/**
-import axios from 'axios';
-import querystring from 'querystring';
-import cookie from 'cookie';
+// Ruta: pages/api/callback.js
 
-export default async function handler(req, res) {
-  try {
-    const { code } = req.query;
+import { getSession } from "next-auth/react";
+import { spotifyApi } from "../../lib/spotify";
 
-    const tokenResponse = await axios.post(
-      'https://accounts.spotify.com/api/token',
-      querystring.stringify({
-        grant_type: 'authorization_code',
-        code,
-        redirect_uri: process.env.SPOTIFY_REDIRECT_URI,
-        client_id: process.env.SPOTIFY_CLIENT_ID,
-        client_secret: process.env.SPOTIFY_CLIENT_SECRET,
-      }),
-      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-    );
-
-    const { access_token } = tokenResponse.data;
-
-    res.setHeader('Set-Cookie', cookie.serialize('access_token', access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 3600,
-      path: '/',
-    }));
-
-    res.redirect('/');
-  } catch (error) {
-    console.error('Error en /api/callback:', error);
-    res.status(500).json({ error: 'Internal Server Error', details: error.message });
-  }
-}
-*/
-
-import { getSession } from 'next-auth/react';
-
-// Callback para manejar la autenticación y redireccionar al usuario tras iniciar sesión
+// Este callback maneja la autenticación de Spotify para la aplicación.
 export default async function handler(req, res) {
   const session = await getSession({ req });
-
+  
   if (!session) {
-    return res.status(401).json({ error: 'No autorizado' });
+    return res.status(401).json({ error: "Usuario no autenticado" });
+  }
+  
+  const { code } = req.query;
+  
+  if (!code) {
+    return res.status(400).json({ error: "Código de autorización faltante" });
   }
 
-  res.status(200).json({ message: 'Autenticación exitosa' });
+  try {
+    const data = await spotifyApi.authorizationCodeGrant(code);
+    const { access_token, refresh_token, expires_in } = data.body;
+
+    spotifyApi.setAccessToken(access_token);
+    spotifyApi.setRefreshToken(refresh_token);
+
+    res.status(200).json({
+      access_token,
+      refresh_token,
+      expires_in,
+    });
+  } catch (error) {
+    console.error("Error en el callback de autenticación:", error);
+    res.status(500).json({ error: "Error al procesar el callback de autenticación" });
+  }
 }
