@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import cookie from 'js-cookie';
+import '../styles.css'; // Importar el archivo CSS externo
 
 export default function Home() {
   const [songs, setSongs] = useState([]);
@@ -8,6 +9,7 @@ export default function Home() {
   const [topGenres, setTopGenres] = useState([]);
   const [genreArtists, setGenreArtists] = useState({});
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [localFollowedArtists, setLocalFollowedArtists] = useState([]);
 
   useEffect(() => {
     // Obtener canciones recientes
@@ -61,22 +63,25 @@ export default function Home() {
       }
     }
 
+    // Cargar el estado de artistas seguidos desde localStorage
+    const followed = JSON.parse(localStorage.getItem('followedArtists') || '[]');
+    setLocalFollowedArtists(followed);
+
     fetchRecentlyPlayed();
     fetchFollowedArtists();
     fetchTopGenresAndArtists();
   }, []);
 
-  const handleFollowToggle = async (artistId, isFollowing) => {
-    const action = isFollowing ? 'unfollow' : 'follow';
-    const response = await fetch(`/api/toggleFollow?artistId=${artistId}&action=${action}`, {
-      method: 'POST',
-    });
+  // Manejar el seguimiento de artistas y persistencia en localStorage
+  const handleFollowToggle = (artist) => {
+    const isFollowing = localFollowedArtists.some(a => a.id === artist.id);
 
-    if (response.ok) {
-      setFollowedArtists(prev => prev.map(artist =>
-        artist.id === artistId ? { ...artist, isFollowing: !isFollowing } : artist
-      ));
-    }
+    const updatedFollowedArtists = isFollowing
+      ? localFollowedArtists.filter(a => a.id !== artist.id)
+      : [...localFollowedArtists, artist];
+
+    setLocalFollowedArtists(updatedFollowedArtists);
+    localStorage.setItem('followedArtists', JSON.stringify(updatedFollowedArtists));
   };
 
   const handleLogout = () => {
@@ -102,20 +107,23 @@ export default function Home() {
       {/* Módulo: Últimos Artistas Escuchados */}
       <h2>Últimos Artistas Escuchados</h2>
       <div className="grid">
-        {uniqueArtists.map((artist, index) => (
-          <div key={index} className="card">
-            <a href={artist.link} target="_blank" rel="noopener noreferrer">
-              <img src={artist.albumImage} alt={artist.name} className="artist-thumbnail" />
-              <h3>{artist.name}</h3>
-            </a>
-            <button
-              onClick={() => handleFollowToggle(artist.id, artist.isFollowing)}
-              className={artist.isFollowing ? "button-unfollow" : "button-follow"}
-            >
-              {artist.isFollowing ? "Dejar de Seguir" : "Seguir"}
-            </button>
-          </div>
-        ))}
+        {uniqueArtists.map((artist, index) => {
+          const isFollowing = localFollowedArtists.some(a => a.id === artist.id);
+          return (
+            <div key={index} className="card">
+              <a href={artist.link} target="_blank" rel="noopener noreferrer">
+                <img src={artist.albumImage} alt={artist.name} className="artist-thumbnail" />
+                <h3>{artist.name}</h3>
+              </a>
+              <button
+                onClick={() => handleFollowToggle(artist)}
+                className={isFollowing ? "button-unfollow" : "button-follow"}
+              >
+                {isFollowing ? "Dejar de Seguir" : "Seguir"}
+              </button>
+            </div>
+          );
+        })}
       </div>
 
       {/* Módulo: Últimos Artistas Seguidos en Spotify */}
@@ -144,10 +152,10 @@ export default function Home() {
                   <p>{artist.name}</p>
                 </a>
                 <button
-                  onClick={() => handleFollowToggle(artist.id, artist.isFollowing)}
-                  className={artist.isFollowing ? "button-unfollow" : "button-follow"}
+                  onClick={() => handleFollowToggle(artist)}
+                  className={localFollowedArtists.some(a => a.id === artist.id) ? "button-unfollow" : "button-follow"}
                 >
-                  {artist.isFollowing ? "Dejar de Seguir" : "Seguir"}
+                  {localFollowedArtists.some(a => a.id === artist.id) ? "Dejar de Seguir" : "Seguir"}
                 </button>
               </div>
             ))}
@@ -158,53 +166,14 @@ export default function Home() {
       {/* Bloque: DE QUIEN RECIBIRÉ NOVEDADES? */}
       <h2>DE QUIEN RECIBIRÉ NOVEDADES?</h2>
       <div className="followed-artists">
-        {followedArtists.map((artist, index) => (
+        {localFollowedArtists.map((artist, index) => (
           <div key={index} className="followed-artist-card">
-            <img src={artist.image} alt={artist.name} className="artist-circle" />
+            <img src={artist.albumImage} alt={artist.name} className="artist-circle" />
             <p>{artist.name}</p>
             <p>{artist.latestRelease ? `Último lanzamiento: ${artist.latestRelease}` : ''}</p>
           </div>
         ))}
       </div>
-
-      <style jsx>{`
-        .container {
-          padding: 2rem;
-        }
-        .grid {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 1rem;
-        }
-        .card, .followed-artist-card {
-          text-align: center;
-          width: 120px;
-        }
-        .artist-thumbnail, .artist-circle {
-          width: 100px;
-          height: 100px;
-          border-radius: 50%;
-        }
-        .button-follow, .button-unfollow {
-          padding: 0.5rem;
-          margin-top: 0.5rem;
-          cursor: pointer;
-        }
-        .carousel {
-          display: flex;
-          overflow-x: auto;
-          gap: 1rem;
-          padding: 1rem 0;
-        }
-        .carousel-item {
-          text-align: center;
-        }
-        .carousel-image {
-          width: 80px;
-          height: 80px;
-          border-radius: 50%;
-        }
-      `}</style>
     </div>
   );
 }
