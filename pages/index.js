@@ -28,31 +28,31 @@ export default function Home() {
   }, []);
 
   // Función para manejar el seguimiento de un artista en la web local
-  const handleFollow = (artist) => {
-    const updatedArtists = [...localFollowedArtists, artist];
-    setLocalFollowedArtists(updatedArtists);
-    localStorage.setItem('localFollowedArtists', JSON.stringify(updatedArtists));
-  };
+const handleFollow = (artist) => {
+  // Asegurarse de que `artist.id` existe antes de intentar hacer la solicitud
+  if (!artist.id) return;
 
-  // Verificar si un artista ya está seguido en la web local
-  const isFollowing = (artistId) => localFollowedArtists.some((artist) => artist.id === artistId);
+  const updatedArtists = [...localFollowedArtists, artist];
+  setLocalFollowedArtists(updatedArtists);
+  localStorage.setItem('localFollowedArtists', JSON.stringify(updatedArtists));
 
-  return (
-    <div>
-      {/* Sección: Artistas Seguidos en Nuestra App */}
-      <h1>Artistas Seguidos en nuestra app</h1>
-      <div>
-        {localFollowedArtists.length > 0 ? (
-          localFollowedArtists.map((artist) => (
-            <div key={artist.id}>
-              <h2>{artist.name}</h2>
-              <p>Oyentes mensuales: {artist.monthlyListeners}</p>
-            </div>
-          ))
-        ) : (
-          <p>No has seguido a ningún artista en nuestra app aún.</p>
-        )}
-      </div>
+  // Llamada a la API para actualizar en el backend
+  fetch(`/api/toggleFollow?artistId=${artist.id}&action=follow`, {
+    method: 'POST'
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.error) {
+      console.error("Error al seguir/dejar de seguir al artista:", data);
+    } else {
+      console.log("Artista seguido en la web local:", artist.name);
+    }
+  })
+  .catch(error => {
+    console.error("Error al seguir/dejar de seguir al artista:", error);
+  });
+};
+
 
       {/* Sección: Últimos Artistas Escuchados en Spotify */}
       <h1>Últimos Artistas Escuchados en Spotify</h1>
@@ -62,20 +62,21 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Sección: Artistas Seguidos en Spotify */}
-      <h1>Artistas Seguidos en Spotify</h1>
-      <div>
-        {followedArtists.map((artist) => (
-          <ArtistCard key={artist.id} artist={artist}>
-            <button
-              onClick={() => handleFollow(artist)}
-              disabled={isFollowing(artist.id)}
-            >
-              {isFollowing(artist.id) ? 'Siguiendo' : 'Seguir'}
-            </button>
-          </ArtistCard>
-        ))}
-      </div>
+     {/* Sección: Artistas Seguidos en Spotify */}
+<h1>Artistas Seguidos en Spotify</h1>
+<div>
+  {followedArtists.map((artist) => (
+    <ArtistCard key={artist.id} artist={artist}>
+      <button
+        onClick={() => handleFollow(artist)} // Asegurarse de que se está pasando el objeto `artist`
+        disabled={isFollowing(artist.id)}
+      >
+        {isFollowing(artist.id) ? 'Siguiendo' : 'Seguir'}
+      </button>
+    </ArtistCard>
+  ))}
+</div>
+
 
       {/* Sección: Géneros Favoritos */}
       <h1>Géneros Favoritos</h1>
