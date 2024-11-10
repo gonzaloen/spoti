@@ -16,9 +16,6 @@ export default NextAuth({
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
-  pages: {
-    signIn: '/api/login', // Ruta personalizada para el login si lo necesitas
-  },
   callbacks: {
     async session({ session, token }) {
       session.user.accessToken = token.accessToken;
