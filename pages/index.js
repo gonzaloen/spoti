@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import cookie from 'js-cookie';
-import '../styles/styles.css';
 
 export default function Home() {
   const [songs, setSongs] = useState([]);
