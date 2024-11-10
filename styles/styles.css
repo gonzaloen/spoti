@@ -1,0 +1,90 @@
+/* Fondo blanco */
+body {
+  font-family: 'Roboto', sans-serif;
+  background-color: #ffffff;
+  color: #333333;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  background-color: #f9f9f9;
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.artist-thumbnail {
+  width: 100%;
+  max-width: 100px;
+  border-radius: 0;
+  margin-bottom: 8px;
+  object-fit: cover;
+}
+
+.carousel {
+  display: flex;
+  overflow-x: auto;
+  padding: 10px 0;
+  gap: 20px;
+  scrollbar-width: none;
+}
+
+.carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel-item {
+  flex: 0 0 auto;
+  text-align: center;
+  width: 120px;
+}
+
+.carousel-image {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Botones */
+.button-follow,
+.button-unfollow {
+  padding: 8px 20px;
+  border-radius: 25px;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  color: #fff;
+  margin-top: 10px;
+  transition: background-color 0.3s;
+}
+
+.button-follow {
+  background-color: #1db954;
+}
+
+.button-follow:hover {
+  background-color: #1ed760;
+}
+
+.button-unfollow {
+  background-color: #e0245e;
+}
+
+.button-unfollow:hover {
+  background-color: #ff4f81;
+}
