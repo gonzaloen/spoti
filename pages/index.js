@@ -25,7 +25,7 @@ export default function Home() {
               link: song.artistLink,
               albumImage: song.albumImage,
               id: song.artistId,
-              latestRelease: song.latestRelease,  // Asume que el último lanzamiento se recibe aquí
+              latestRelease: song.latestRelease, // Suponemos que la API devuelve el último lanzamiento
             });
           }
         });
@@ -33,41 +33,17 @@ export default function Home() {
       }
     }
 
-    async function fetchFollowedArtists() {
-      const followed = JSON.parse(localStorage.getItem('followedArtists') || '[]');
-      setFollowedArtists(followed);
-    }
-
-    async function fetchTopGenres() {
-      const response = await fetch('/api/getTopGenres');
-      if (response.ok) {
-        const genres = await response.json();
-        setTopGenres(genres);
-
-        const genreArtistsData = {};
-        const seenArtists = new Set();
-
-        for (const genre of genres) {
-          const genreResponse = await fetch(`/api/getTopArtistsByGenre?genre=${genre}`);
-          if (genreResponse.ok) {
-            const artists = await genreResponse.json();
-            const filteredArtists = artists.filter(artist => !seenArtists.has(artist.id));
-            filteredArtists.forEach(artist => seenArtists.add(artist.id));
-            genreArtistsData[genre] = filteredArtists;
-          }
-        }
-        setGenreArtists(genreArtistsData);
-      }
-    }
+    // Cargar los artistas seguidos desde localStorage al inicio
+    const followed = JSON.parse(localStorage.getItem('followedArtists') || '[]');
+    setFollowedArtists(followed);
 
     fetchSongs();
-    fetchFollowedArtists();
-    fetchTopGenres();
   }, []);
 
   const handleFollowToggle = (artist) => {
     const isFollowing = followedArtists.some(a => a.id === artist.id);
 
+    // Añadir o quitar de los artistas seguidos con su último lanzamiento
     const updatedFollowedArtists = isFollowing
       ? followedArtists.filter(a => a.id !== artist.id)
       : [...followedArtists, artist];
