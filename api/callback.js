@@ -1,4 +1,4 @@
-/*
+/**
 import axios from 'axios';
 import querystring from 'querystring';
 import cookie from 'cookie';
