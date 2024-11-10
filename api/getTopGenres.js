@@ -1,38 +1,24 @@
-import axios from 'axios';
-import cookie from 'cookie';
+import { getSession } from 'next-auth/react';
 
 export default async function handler(req, res) {
-  const cookies = cookie.parse(req.headers.cookie || '');
-  const accessToken = cookies.access_token;
+  const session = await getSession({ req });
 
-  if (!accessToken) {
-    return res.status(401).json({ error: 'No autenticado' });
+  if (!session) {
+    return res.status(401).json({ error: 'No autorizado' });
   }
 
   try {
-    const response = await axios.get('https://api.spotify.com/v1/me/top/artists', {
+    const response = await fetch('https://api.spotify.com/v1/me/top/artists', {
       headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-      params: {
-        limit: 50,
+        Authorization: `Bearer ${session.accessToken}`,
       },
     });
 
-    const genresCount = {};
-    response.data.items.forEach(artist => {
-      artist.genres.forEach(genre => {
-        genresCount[genre] = (genresCount[genre] || 0) + 1;
-      });
-    });
+    const data = await response.json();
+    const genres = Array.from(new Set(data.items.flatMap((artist) => artist.genres))).slice(0, 5);
 
-    const topGenres = Object.entries(genresCount)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([genre]) => genre);
-
-    res.status(200).json(topGenres);
+    res.status(200).json(genres);
   } catch (error) {
-    res.status(500).json({ error: 'Error al obtener géneros más escuchados', details: error.message });
+    res.status(500).json({ error: 'Error al obtener los géneros más escuchados' });
   }
 }
