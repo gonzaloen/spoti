@@ -1,40 +1,32 @@
-import axios from 'axios';
-import cookie from 'cookie';
+import { getSession } from 'next-auth/react';
 
 export default async function handler(req, res) {
-  const cookies = cookie.parse(req.headers.cookie || '');
-  const accessToken = cookies.access_token;
+  const session = await getSession({ req });
   const { genre } = req.query;
 
-  if (!accessToken) {
-    return res.status(401).json({ error: 'No autenticado' });
+  if (!session) {
+    return res.status(401).json({ error: 'No autorizado' });
   }
 
   try {
-    // Obtener los artistas principales del usuario
-    const response = await axios.get('https://api.spotify.com/v1/me/top/artists', {
+    const response = await fetch('https://api.spotify.com/v1/me/top/artists', {
       headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-      params: {
-        limit: 50, // Para obtener suficientes artistas y filtrar por género
+        Authorization: `Bearer ${session.accessToken}`,
       },
     });
 
-    // Filtrar artistas que contengan el género solicitado
-    const filteredArtists = response.data.items
-      .filter(artist => artist.genres.includes(genre))
-      .map(artist => ({
+    const data = await response.json();
+    const artistsByGenre = data.items
+      .filter((artist) => artist.genres.includes(genre))
+      .map((artist) => ({
         id: artist.id,
         name: artist.name,
-        image: artist.images[0]?.url,
-        link: artist.external_urls.spotify,
-        isFollowing: false, // Estado inicial, se puede actualizar al seguir
-      }));
+        listeners: artist.followers.total,
+      }))
+      .slice(0, 5); // Mostrar solo 5 artistas por género
 
-    res.status(200).json(filteredArtists);
+    res.status(200).json(artistsByGenre);
   } catch (error) {
-    console.error('Error al obtener artistas por género:', error.message);
-    res.status(500).json({ error: 'Error al obtener artistas por género', details: error.message });
+    res.status(500).json({ error: 'Error al obtener los artistas del género especificado' });
   }
 }
