@@ -33,7 +33,7 @@ export default function Home() {
       }
     }
 
-    // Obtener artistas seguidos
+    // Obtener artistas seguidos en Spotify
     async function fetchFollowedArtists() {
       const response = await fetch('/api/getFollowedArtists');
       if (response.ok) {
@@ -126,12 +126,7 @@ export default function Home() {
             <img src={artist.image} alt={artist.name} className="artist-thumbnail" />
             <h3>{artist.name}</h3>
             <p>{artist.followers} seguidores</p>
-            <button
-              onClick={() => handleFollowToggle(artist.id, artist.isFollowing)}
-              className={artist.isFollowing ? "button-unfollow" : "button-follow"}
-            >
-              {artist.isFollowing ? "Dejar de Seguir" : "Seguir"}
-            </button>
+            <a href={artist.link} target="_blank" rel="noopener noreferrer">Spotify</a>
           </div>
         ))}
       </div>
