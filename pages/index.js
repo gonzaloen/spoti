@@ -5,7 +5,9 @@ export default function Home() {
   const [songs, setSongs] = useState([]);
   const [uniqueArtists, setUniqueArtists] = useState([]);
   const [followedArtists, setFollowedArtists] = useState([]);
+  const [topGenres, setTopGenres] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [genreArtists, setGenreArtists] = useState({});
 
   useEffect(() => {
     async function fetchSongs() {
@@ -23,7 +25,7 @@ export default function Home() {
               link: song.artistLink,
               albumImage: song.albumImage,
               id: song.artistId,
-              isFollowing: false,
+              latestRelease: song.latestRelease,  // Asume que el último lanzamiento se recibe aquí
             });
           }
         });
@@ -31,17 +33,41 @@ export default function Home() {
       }
     }
 
-    // Cargar los artistas seguidos desde localStorage
-    const followed = JSON.parse(localStorage.getItem('followedArtists') || '[]');
-    setFollowedArtists(followed);
+    async function fetchFollowedArtists() {
+      const followed = JSON.parse(localStorage.getItem('followedArtists') || '[]');
+      setFollowedArtists(followed);
+    }
+
+    async function fetchTopGenres() {
+      const response = await fetch('/api/getTopGenres');
+      if (response.ok) {
+        const genres = await response.json();
+        setTopGenres(genres);
+
+        const genreArtistsData = {};
+        const seenArtists = new Set();
+
+        for (const genre of genres) {
+          const genreResponse = await fetch(`/api/getTopArtistsByGenre?genre=${genre}`);
+          if (genreResponse.ok) {
+            const artists = await genreResponse.json();
+            const filteredArtists = artists.filter(artist => !seenArtists.has(artist.id));
+            filteredArtists.forEach(artist => seenArtists.add(artist.id));
+            genreArtistsData[genre] = filteredArtists;
+          }
+        }
+        setGenreArtists(genreArtistsData);
+      }
+    }
 
     fetchSongs();
+    fetchFollowedArtists();
+    fetchTopGenres();
   }, []);
 
   const handleFollowToggle = (artist) => {
     const isFollowing = followedArtists.some(a => a.id === artist.id);
 
-    // Añadir o quitar de los artistas seguidos
     const updatedFollowedArtists = isFollowing
       ? followedArtists.filter(a => a.id !== artist.id)
       : [...followedArtists, artist];
@@ -92,18 +118,89 @@ export default function Home() {
         })}
       </div>
 
-      {/* Nuevo bloque: DE QUIEN RECIBIRÉ NOVEDADES? */}
+      {/* Módulo: Últimos Artistas Seguidos */}
+      <h2>Últimos Artistas Seguidos</h2>
+      <div className="grid">
+        {followedArtists.map((artist, index) => (
+          <div key={index} className="card">
+            <img src={artist.albumImage} alt={artist.name} className="artist-thumbnail" />
+            <h3>{artist.name}</h3>
+            <p>{artist.followers} seguidores</p>
+            <button
+              onClick={() => handleFollowToggle(artist)}
+              className={artist.isFollowing ? "button-unfollow" : "button-follow"}
+            >
+              {artist.isFollowing ? "Dejar de Seguir" : "Seguir"}
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Módulo: Top Géneros y Artistas Relacionados */}
+      <h2>Top Géneros Escuchados y Artistas Relacionados</h2>
+      {topGenres.map((genre, index) => (
+        <div key={index}>
+          <h3>{genre}</h3>
+          <div className="carousel">
+            {genreArtists[genre]?.map(artist => (
+              <div key={artist.id} className="carousel-item">
+                <a href={artist.link} target="_blank" rel="noopener noreferrer">
+                  <img src={artist.albumImage} alt={artist.name} className="carousel-image" />
+                  <p>{artist.name}</p>
+                </a>
+                <button
+                  onClick={() => handleFollowToggle(artist)}
+                  className={artist.isFollowing ? "button-unfollow" : "button-follow"}
+                >
+                  {artist.isFollowing ? "Dejar de Seguir" : "Seguir"}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {/* Nuevo Bloque: De Quién Recibiré Novedades */}
       <h2>DE QUIEN RECIBIRÉ NOVEDADES?</h2>
       <div className="followed-artists">
         {followedArtists.map((artist, index) => (
           <div key={index} className="followed-artist-card">
             <img src={artist.albumImage} alt={artist.name} className="artist-circle" />
             <p>{artist.name}</p>
+            <p>{artist.latestRelease ? `Último lanzamiento: ${artist.latestRelease}` : ''}</p>
           </div>
         ))}
       </div>
 
-
+      <style jsx>{`
+        .container {
+          padding: 2rem;
+        }
+        .grid {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 1rem;
+        }
+        .card, .followed-artist-card {
+          text-align: center;
+          width: 120px;
+        }
+        .artist-thumbnail {
+          width: 100px;
+          height: 100px;
+          border-radius: 8px;
+        }
+        .artist-circle {
+          width: 80px;
+          height: 80px;
+          border-radius: 50%;
+        }
+        .button-follow, .button-unfollow {
+          padding: 0.5rem;
+          margin-top: 0.5rem;
+          cursor: pointer;
+        }
+      `}</style>
     </div>
   );
 }
