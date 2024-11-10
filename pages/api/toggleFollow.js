@@ -1,31 +1,27 @@
-import axios from 'axios';
-import cookie from 'cookie';
+import { getSession } from 'next-auth/react';
 
+// Endpoint para seguir o dejar de seguir a un artista en la web
 export default async function handler(req, res) {
-  const { artistId, action } = req.query; // `action` puede ser 'follow' o 'unfollow'
-  const cookies = cookie.parse(req.headers.cookie || '');
-  const accessToken = cookies.access_token;
+  const session = await getSession({ req });
+  const { artistId, action } = req.query;
 
-  if (!accessToken) {
-    return res.status(401).json({ error: 'No autenticado' });
+  if (!session) {
+    return res.status(401).json({ error: 'No autorizado' });
   }
 
   try {
-    const method = action === 'follow' ? 'PUT' : 'DELETE';
-    await axios({
-      method,
-      url: `https://api.spotify.com/v1/me/following?type=artist&ids=${artistId}`,
+    const response = await fetch(`https://api.spotify.com/v1/me/following?type=artist&ids=${artistId}`, {
+      method: action === 'follow' ? 'PUT' : 'DELETE',
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${session.accessToken}`,
+        'Content-Type': 'application/json',
       },
     });
-    res.status(200).json({ success: true });
+
+    if (!response.ok) throw new Error('Error al seguir/dejar de seguir al artista');
+
+    res.status(200).json({ message: 'Operación exitosa' });
   } catch (error) {
-    console.error('Error al seguir/dejar de seguir al artista:', error);
-    res.status(error.response?.status || 500).json({
-      error: 'Error al procesar la solicitud',
-      details: error.message,
-    });
+    res.status(400).json({ error: 'Error al procesar la solicitud', details: error.message });
   }
 }
-
