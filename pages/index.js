@@ -1,176 +1,104 @@
 import { useEffect, useState } from 'react';
-import cookie from 'js-cookie';
+import { getFollowedArtists, getTopGenres, getTopArtistsByGenre, getRecentlyPlayed } from './api'; // Importar las funciones para Spotify
+import ArtistCard from './components/ArtistCard';
 
 export default function Home() {
-  const [songs, setSongs] = useState([]);
-  const [uniqueArtists, setUniqueArtists] = useState([]);
   const [followedArtists, setFollowedArtists] = useState([]);
   const [topGenres, setTopGenres] = useState([]);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [genreArtists, setGenreArtists] = useState({});
+  const [topArtistsByGenre, setTopArtistsByGenre] = useState([]);
+  const [recentlyPlayedArtists, setRecentlyPlayedArtists] = useState([]);
+  const [localFollowedArtists, setLocalFollowedArtists] = useState([]);
 
   useEffect(() => {
-    async function fetchSongs() {
-      const response = await fetch('/api/recentlyPlayed');
-      if (response.ok) {
-        const data = await response.json();
-        setSongs(data);
-        setIsAuthenticated(true);
+    // Obtener datos de Spotify al cargar
+    getFollowedArtists().then(setFollowedArtists);
+    getTopGenres().then(setTopGenres);
+    getTopArtistsByGenre().then(setTopArtistsByGenre);
 
-        const artistsMap = new Map();
-        data.forEach(song => {
-          if (!artistsMap.has(song.artistName)) {
-            artistsMap.set(song.artistName, {
-              name: song.artistName,
-              link: song.artistLink,
-              albumImage: song.albumImage,
-              id: song.artistId,
-            });
-          }
-        });
-        setUniqueArtists(Array.from(artistsMap.values()));
-      }
-    }
+    // Obtener los últimos artistas escuchados, limitando a 8 artistas únicos
+    getRecentlyPlayed().then((recentlyPlayed) => {
+      const uniqueArtists = Array.from(new Set(recentlyPlayed.map(track => track.artist)))
+        .slice(0, 8); // Limitar a 8 artistas
+      setRecentlyPlayedArtists(uniqueArtists);
+    });
 
-    async function fetchFollowedArtists() {
-      const response = await fetch('/api/getFollowedArtists');
-      if (response.ok) {
-        const data = await response.json();
-        setFollowedArtists(data);
-      }
-    }
-
-    async function fetchTopGenres() {
-      const response = await fetch('/api/getTopGenres');
-      if (response.ok) {
-        const genres = await response.json();
-        setTopGenres(genres);
-
-        const genreArtistsData = {};
-        const seenArtists = new Set();
-
-        for (const genre of genres) {
-          const genreResponse = await fetch(`/api/getTopArtistsByGenre?genre=${genre}`);
-          if (genreResponse.ok) {
-            const artists = await genreResponse.json();
-
-            // Filtrar artistas para evitar duplicados en otros géneros
-            const filteredArtists = artists.filter(artist => !seenArtists.has(artist.id));
-            filteredArtists.forEach(artist => seenArtists.add(artist.id));
-
-            genreArtistsData[genre] = filteredArtists;
-          }
-        }
-        setGenreArtists(genreArtistsData);
-      }
-    }
-
-    fetchSongs();
-    fetchFollowedArtists();
-    fetchTopGenres();
+    // Obtener artistas seguidos localmente desde localStorage
+    const storedArtists = JSON.parse(localStorage.getItem('localFollowedArtists')) || [];
+    setLocalFollowedArtists(storedArtists);
   }, []);
 
-  const handleFollowToggle = async (artistId, isFollowing) => {
-    const action = isFollowing ? 'unfollow' : 'follow';
-    try {
-      const response = await fetch(`/api/toggleFollow?artistId=${artistId}&action=${action}`, {
-        method: 'POST',
-      });
-
-      if (response.ok) {
-        setFollowedArtists(prevArtists =>
-          prevArtists.map(artist =>
-            artist.id === artistId ? { ...artist, isFollowing: !isFollowing } : artist
-          )
-        );
-      } else {
-        console.error("Error al seguir/dejar de seguir al artista:", await response.json());
-      }
-    } catch (error) {
-      console.error("Error en la solicitud de seguimiento:", error);
-    }
+  // Función para manejar el seguimiento de un artista en la web local
+  const handleFollow = (artist) => {
+    const updatedArtists = [...localFollowedArtists, artist];
+    setLocalFollowedArtists(updatedArtists);
+    localStorage.setItem('localFollowedArtists', JSON.stringify(updatedArtists));
   };
 
-  const handleLogout = () => {
-    cookie.remove('access_token');
-    setIsAuthenticated(false);
-    window.location.href = '/';
-  };
-
-  if (!isAuthenticated) {
-    return (
-      <div>
-        <h1>Bienvenido a Spotify Demo</h1>
-        <p>Para ver tus datos, por favor inicia sesión con Spotify.</p>
-        <a href="/api/login">Iniciar Sesión</a>
-      </div>
-    );
-  }
+  // Verificar si un artista ya está seguido en la web local
+  const isFollowing = (artistId) => localFollowedArtists.some((artist) => artist.id === artistId);
 
   return (
-    <div className="container">
-      <button onClick={handleLogout}>Desloguearse</button>
+    <div>
+      {/* Sección: Artistas Seguidos en Nuestra App */}
+      <h1>Artistas Seguidos en nuestra app</h1>
+      <div>
+        {localFollowedArtists.length > 0 ? (
+          localFollowedArtists.map((artist) => (
+            <div key={artist.id}>
+              <h2>{artist.name}</h2>
+              <p>Oyentes mensuales: {artist.monthlyListeners}</p>
+            </div>
+          ))
+        ) : (
+          <p>No has seguido a ningún artista en nuestra app aún.</p>
+        )}
+      </div>
 
-      {/* Módulo: Últimos Artistas Escuchados */}
-      <h2>Últimos Artistas Escuchados</h2>
-      <div className="grid">
-        {uniqueArtists.map((artist, index) => (
-          <div key={index} className="card">
-            <a href={artist.link} target="_blank" rel="noopener noreferrer">
-              <img src={artist.albumImage} alt={artist.name} className="artist-thumbnail" />
-              <h3>{artist.name}</h3>
-            </a>
+      {/* Sección: Últimos Artistas Escuchados en Spotify */}
+      <h1>Últimos Artistas Escuchados en Spotify</h1>
+      <div>
+        {recentlyPlayedArtists.map((artist) => (
+          <ArtistCard key={artist.id} artist={artist} />
+        ))}
+      </div>
+
+      {/* Sección: Artistas Seguidos en Spotify */}
+      <h1>Artistas Seguidos en Spotify</h1>
+      <div>
+        {followedArtists.map((artist) => (
+          <ArtistCard key={artist.id} artist={artist}>
             <button
-              onClick={() => handleFollowToggle(artist.id, artist.isFollowing)}
-              className={artist.isFollowing ? "button-unfollow" : "button-follow"}
+              onClick={() => handleFollow(artist)}
+              disabled={isFollowing(artist.id)}
             >
-              {artist.isFollowing ? "Dejar de Seguir" : "Seguir"}
+              {isFollowing(artist.id) ? 'Siguiendo' : 'Seguir'}
             </button>
+          </ArtistCard>
+        ))}
+      </div>
+
+      {/* Sección: Géneros Favoritos */}
+      <h1>Géneros Favoritos</h1>
+      <div>
+        {topGenres.map((genre) => (
+          <div key={genre}>
+            <h2>{genre}</h2>
           </div>
         ))}
       </div>
 
-      {/* Módulo: Últimos Artistas Seguidos */}
-      <h2>Últimos Artistas Seguidos</h2>
-      <div className="grid">
-        {followedArtists.map((artist, index) => (
-          <div key={index} className="card">
-            <img src={artist.image} alt={artist.name} className="artist-thumbnail" />
-            <h3>{artist.name}</h3>
-            <p>{artist.followers} seguidores</p>
-            <button
-              onClick={() => handleFollowToggle(artist.id, artist.isFollowing)}
-              className={artist.isFollowing ? "button-unfollow" : "button-follow"}
-            >
-              {artist.isFollowing ? "Dejar de Seguir" : "Seguir"}
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {/* Módulo: Top Géneros y Artistas Relacionados */}
-      <h2>Top Géneros Escuchados y Artistas Relacionados</h2>
-      {topGenres.map((genre, index) => (
-        <div key={index}>
-          <h3>{genre}</h3>
-          <div className="carousel">
-            {genreArtists[genre]?.map(artist => (
-              <div key={artist.id} className="carousel-item">
-                <a href={artist.link} target="_blank" rel="noopener noreferrer">
-                  <img src={artist.image} alt={artist.name} className="carousel-image" />
-                  <p>{artist.name}</p>
-                </a>
-                <button
-                  onClick={() => handleFollowToggle(artist.id, artist.isFollowing)}
-                  className={artist.isFollowing ? "button-unfollow" : "button-follow"}
-                >
-                  {artist.isFollowing ? "Dejar de Seguir" : "Seguir"}
-                </button>
-              </div>
+      {/* Sección: Top Artistas por Género */}
+      <h1>Top Artistas por Género</h1>
+      <div>
+        {topArtistsByGenre.map((genre) => (
+          <div key={genre.name}>
+            <h2>{genre.name}</h2>
+            {genre.artists.map((artist) => (
+              <ArtistCard key={artist.id} artist={artist} />
             ))}
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
