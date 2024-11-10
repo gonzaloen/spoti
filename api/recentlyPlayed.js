@@ -38,25 +38,30 @@ export default async function handler(req, res) {
 */
 // /api/recentlyPlayed.js
 
-import axios from 'axios';
+import { getSession } from 'next-auth/react';
 
 export default async function handler(req, res) {
-  const { access_token } = req.query;
+  const session = await getSession({ req });
 
-  if (!access_token) {
-    return res.status(400).json({ error: 'Missing access token' });
+  if (!session) {
+    return res.status(401).json({ error: 'No autorizado' });
   }
 
   try {
-    const response = await axios.get('https://api.spotify.com/v1/me/player/recently-played?limit=8', {
+    const response = await fetch('https://api.spotify.com/v1/me/player/recently-played', {
       headers: {
-        Authorization: `Bearer ${access_token}`,
+        Authorization: `Bearer ${session.accessToken}`,
       },
     });
 
-    const recentlyPlayed = response.data.items.map((item) => item.track.artists[0]);
-    res.status(200).json({ recentlyPlayed });
+    const data = await response.json();
+    const artists = data.items.map((item) => ({
+      id: item.track.artists[0].id,
+      name: item.track.artists[0].name,
+    }));
+
+    res.status(200).json(artists);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch recently played tracks', details: error.message });
+    res.status(500).json({ error: 'Error al obtener los últimos artistas escuchados' });
   }
 }
