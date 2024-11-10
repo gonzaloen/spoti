@@ -1,73 +1,110 @@
-import React, { useEffect, useState } from 'react';
-import ArtistCard from '../components/ArtistCard'; // Componente que muestra cada artista
-import { getFollowedArtists, getRecentlyPlayedArtists, getGenres, getTopArtistsByGenre } from '../lib/api';
+// /pages/index.js
+import { useEffect, useState } from 'react';
+import { getSession } from 'next-auth/react';
+import { getRecentlyPlayedArtists, getFollowedArtists, getGenres, getTopArtistsByGenre } from '../lib/api';
+import ArtistCard from '../components/ArtistCard';
+import GenreSection from '../components/GenreSection';
 
-const Home = () => {
-  const [followedArtists, setFollowedArtists] = useState([]);
+export default function Home({ session }) {
   const [recentlyPlayedArtists, setRecentlyPlayedArtists] = useState([]);
+  const [followedArtists, setFollowedArtists] = useState([]);
   const [topGenres, setTopGenres] = useState([]);
-  const [topArtistsByGenre, setTopArtistsByGenre] = useState({});
+  const [followedLocalArtists, setFollowedLocalArtists] = useState([]);
 
-  // Efecto para cargar los datos al montar el componente
   useEffect(() => {
-    const fetchData = async () => {
-      const followed = await getFollowedArtists();
-      setFollowedArtists(followed);
+    if (session) {
+      // Fetch Recently Played Artists from Spotify
+      getRecentlyPlayedArtists().then(setRecentlyPlayedArtists);
+      // Fetch Followed Artists from Spotify
+      getFollowedArtists().then(setFollowedArtists);
+      // Fetch Top Genres and their Artists
+      getGenres().then(setTopGenres);
+    }
+  }, [session]);
 
-      const recentlyPlayed = await getRecentlyPlayedArtists();
-      setRecentlyPlayedArtists(recentlyPlayed);
-
-      const genres = await getGenres();
-      setTopGenres(genres);
-
-      const artistsByGenre = {};
-      for (const genre of genres) {
-        artistsByGenre[genre] = await getTopArtistsByGenre(genre);
+  // Handle local follow/unfollow logic
+  const handleLocalFollowToggle = (artist) => {
+    setFollowedLocalArtists((prev) => {
+      const isAlreadyFollowing = prev.find((a) => a.id === artist.id);
+      if (isAlreadyFollowing) {
+        return prev.filter((a) => a.id !== artist.id);
       }
-      setTopArtistsByGenre(artistsByGenre);
-    };
-
-    fetchData();
-  }, []);
+      return [...prev, artist];
+    });
+  };
 
   return (
     <div>
-      {/* Sección: Artistas Seguidos en nuestra app */}
-      <section>
-        <h1>Artistas Seguidos en nuestra app</h1>
-        <div>
-          {followedArtists.map((artist) => (
-            <ArtistCard key={artist.id} artist={artist} />
-          ))}
-        </div>
-      </section>
-
       {/* Sección: Últimos Artistas Escuchados en Spotify */}
       <section>
-        <h1>Últimos Artistas Escuchados en Spotify</h1>
-        <div>
+        <h2>Últimos Artistas Escuchados en Spotify</h2>
+        <div className="artist-grid">
           {recentlyPlayedArtists.map((artist) => (
             <ArtistCard key={artist.id} artist={artist} />
           ))}
         </div>
       </section>
 
-      {/* Sección: Top Géneros y Artistas por Género */}
+      {/* Sección: Últimos Artistas Seguidos en Spotify */}
       <section>
-        <h1>Géneros más Escuchados y sus Artistas</h1>
+        <h2>Últimos Artistas Seguidos en Spotify</h2>
+        <div className="artist-grid">
+          {followedArtists.map((artist) => (
+            <ArtistCard key={artist.id} artist={artist} />
+          ))}
+        </div>
+      </section>
+
+      {/* Sección: Géneros Más Escuchados */}
+      <section>
+        <h2>Géneros Más Escuchados</h2>
         {topGenres.map((genre) => (
-          <div key={genre}>
-            <h2>{genre}</h2>
-            <div>
-              {topArtistsByGenre[genre]?.map((artist) => (
-                <ArtistCard key={artist.id} artist={artist} />
-              ))}
-            </div>
-          </div>
+          <GenreSection key={genre.name} genre={genre} />
         ))}
+      </section>
+
+      {/* Sección: Artistas Seguidos en Nuestra App */}
+      <section>
+        <h2>Artistas Seguidos en Nuestra App</h2>
+        <div className="artist-grid">
+          {followedLocalArtists.map((artist) => (
+            <ArtistCard key={artist.id} artist={artist} />
+          ))}
+        </div>
+        {/* Botón Seguir / Siguiendo */}
+        <div className="artist-grid">
+          {recentlyPlayedArtists.map((artist) => (
+            <div key={artist.id}>
+              <ArtistCard artist={artist} />
+              <button
+                onClick={() => handleLocalFollowToggle(artist)}
+                style={{ marginTop: '10px' }}
+              >
+                {followedLocalArtists.find((a) => a.id === artist.id)
+                  ? 'Siguiendo'
+                  : 'Seguir'}
+              </button>
+            </div>
+          ))}
+        </div>
       </section>
     </div>
   );
-};
+}
 
-export default Home;
+// Fetch session on server-side
+export async function getServerSideProps(context) {
+  const session = await getSession(context);
+  if (!session) {
+    return {
+      redirect: {
+        destination: '/api/auth/signin',
+        permanent: false,
+      },
+    };
+  }
+
+  return {
+    props: { session },
+  };
+}
