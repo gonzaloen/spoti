@@ -27,7 +27,7 @@ export default async function handler(req, res) {
       .map(artist => ({
         id: artist.id,
         name: artist.name,
-        image: artist.images[0]?.url,
+        image: artist.images[0]?.url,  // Acceso a la imagen del artista
         link: artist.external_urls.spotify,
         isFollowing: false, // Estado inicial, se puede actualizar al seguir
       }));
