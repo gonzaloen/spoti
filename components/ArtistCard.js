@@ -1,23 +1,12 @@
-// components/ArtistCard.js
+// /components/ArtistCard.js
 
-import React, { useState } from 'react';
+import React from 'react';
 
-const ArtistCard = ({ artist, onFollowToggle }) => {
-  const [isFollowing, setIsFollowing] = useState(false);
-
-  const handleFollowClick = () => {
-    setIsFollowing(!isFollowing);
-    onFollowToggle(artist.id, !isFollowing ? 'follow' : 'unfollow');
-  };
-
+const ArtistCard = ({ artist }) => {
   return (
-    <div className="artist-card">
-      <img src={artist.imageUrl} alt={artist.name} className="artist-image" />
-      <h3>{artist.name}</h3>
-      <p>{artist.monthlyListeners} oyentes mensuales</p>
-      <button onClick={handleFollowClick} className="follow-button">
-        {isFollowing ? 'Siguiendo' : 'Seguir'}
-      </button>
+    <div>
+      <h2>{artist.name}</h2>
+      <p>Oyentes mensuales: {artist.monthlyListeners}</p>
     </div>
   );
 };
