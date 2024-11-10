@@ -43,24 +43,37 @@ export default function Home() {
       }
     }
 
-    // Obtener géneros principales y sus artistas
-    async function fetchTopGenresAndArtists() {
-      const genresResponse = await fetch('/api/getTopGenres');
-      if (genresResponse.ok) {
-        const genres = await genresResponse.json();
-        setTopGenres(genres);
+   async function fetchTopGenresAndArtists() {
+  const genresResponse = await fetch('/api/getTopGenres');
+  if (genresResponse.ok) {
+    const genres = await genresResponse.json();
+    setTopGenres(genres);
 
-        const genreArtistsData = {};
-        for (const genre of genres) {
-          const genreResponse = await fetch(`/api/getTopArtistsByGenre?genre=${genre}`);
-          if (genreResponse.ok) {
-            const artists = await genreResponse.json();
-            genreArtistsData[genre] = artists;
+    const genreArtistsData = {};
+
+    for (const genre of genres) {
+      const genreResponse = await fetch(`/api/getTopArtistsByGenre?genre=${genre}`);
+      if (genreResponse.ok) {
+        const artists = await genreResponse.json();
+
+        // Crear un conjunto para almacenar los IDs de artistas y evitar duplicados
+        const uniqueArtists = [];
+        const artistIds = new Set();
+
+        artists.forEach(artist => {
+          if (!artistIds.has(artist.id)) {
+            uniqueArtists.push(artist);
+            artistIds.add(artist.id);
           }
-        }
-        setGenreArtists(genreArtistsData);
+        });
+
+        genreArtistsData[genre] = uniqueArtists;
       }
     }
+    setGenreArtists(genreArtistsData);
+  }
+}
+
 
     // Cargar el estado de artistas seguidos desde localStorage
     const followed = JSON.parse(localStorage.getItem('followedArtists') || '[]');
