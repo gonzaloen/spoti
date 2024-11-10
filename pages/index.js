@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import cookie from 'js-cookie';
-import '..styles/styles.css'; // Importar el archivo CSS externo
+import '/styles/styles.css'; // Importar el archivo CSS externo
 
 export default function Home() {
   const [songs, setSongs] = useState([]);
