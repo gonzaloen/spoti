@@ -88,3 +88,30 @@ body {
 .button-unfollow:hover {
   background-color: #ff4f81;
 }
+/* Estilo para la sección DE QUIEN RECIBIRÉ NOVEDADES? */
+
+.followed-artists {
+  display: flex;
+  overflow-x: auto;
+  padding: 10px 0;
+  gap: 20px;
+  scrollbar-width: none; /* Ocultar scrollbar en Firefox */
+}
+
+.followed-artists::-webkit-scrollbar {
+  display: none; /* Ocultar scrollbar en Chrome, Safari y Edge */
+}
+
+.followed-artist-card {
+  flex: 0 0 auto;
+  text-align: center;
+  width: 120px;
+}
+
+.artist-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 8px;
+}
