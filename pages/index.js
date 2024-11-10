@@ -159,6 +159,57 @@ export default function Home() {
           </div>
         </div>
       ))}
+
+      {/* Bloque: DE QUIEN RECIBIRÉ NOVEDADES? */}
+      <h2>DE QUIEN RECIBIRÉ NOVEDADES?</h2>
+      <div className="followed-artists">
+        {followedArtists.map((artist, index) => (
+          <div key={index} className="followed-artist-card">
+            <img src={artist.image} alt={artist.name} className="artist-circle" />
+            <p>{artist.name}</p>
+            <p>{artist.latestRelease ? `Último lanzamiento: ${artist.latestRelease}` : ''}</p>
+          </div>
+        ))}
+      </div>
+
+      <style jsx>{`
+        .container {
+          padding: 2rem;
+        }
+        .grid {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 1rem;
+        }
+        .card, .followed-artist-card {
+          text-align: center;
+          width: 120px;
+        }
+        .artist-thumbnail, .artist-circle {
+          width: 100px;
+          height: 100px;
+          border-radius: 50%;
+        }
+        .button-follow, .button-unfollow {
+          padding: 0.5rem;
+          margin-top: 0.5rem;
+          cursor: pointer;
+        }
+        .carousel {
+          display: flex;
+          overflow-x: auto;
+          gap: 1rem;
+          padding: 1rem 0;
+        }
+        .carousel-item {
+          text-align: center;
+        }
+        .carousel-image {
+          width: 80px;
+          height: 80px;
+          border-radius: 50%;
+        }
+      `}</style>
     </div>
   );
 }
