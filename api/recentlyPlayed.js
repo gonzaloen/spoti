@@ -36,38 +36,27 @@ export default async function handler(req, res) {
   }
 }
 */
+// /api/recentlyPlayed.js
+
 import axios from 'axios';
-import cookie from 'cookie';
 
 export default async function handler(req, res) {
-  const cookies = cookie.parse(req.headers.cookie || '');
-  const accessToken = cookies.access_token;
+  const { access_token } = req.query;
 
-  if (!accessToken) {
-    return res.status(401).json({ error: 'No autenticado' });
+  if (!access_token) {
+    return res.status(400).json({ error: 'Missing access token' });
   }
 
   try {
-    const response = await axios.get('https://api.spotify.com/v1/me/player/recently-played', {
+    const response = await axios.get('https://api.spotify.com/v1/me/player/recently-played?limit=8', {
       headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-      params: {
-        limit: 10,
+        Authorization: `Bearer ${access_token}`,
       },
     });
 
-    const recentlyPlayed = response.data.items.map(item => ({
-      songName: item.track.name,
-      artistName: item.track.artists[0].name,
-      artistLink: item.track.artists[0].external_urls.spotify,
-      albumImage: item.track.album.images[0]?.url,
-      artistId: item.track.artists[0].id,
-    }));
-
-    res.status(200).json(recentlyPlayed);
+    const recentlyPlayed = response.data.items.map((item) => item.track.artists[0]);
+    res.status(200).json({ recentlyPlayed });
   } catch (error) {
-    console.error('Error al obtener canciones recientes:', error.message);
-    res.status(500).json({ error: 'Error al obtener canciones recientes', details: error.message });
+    res.status(500).json({ error: 'Failed to fetch recently played tracks', details: error.message });
   }
 }
