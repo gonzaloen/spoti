@@ -1,5 +1,5 @@
 // Ruta: pages/api/login.js
-
+/*
 import { getSession } from "next-auth/react";
 import { spotifyApi } from "../../lib/spotify";
 
@@ -23,3 +23,4 @@ export default async function handler(req, res) {
 
   res.redirect(authorizeURL);
 }
+*/
